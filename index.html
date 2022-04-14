@@ -1,0 +1,63 @@
+<head>
+	<style>
+		body {
+			margin: 0;
+		}
+	</style>
+
+	<link rel="stylesheet" href="./static/app.css">
+	<link rel="stylesheet" href="./lib/codemirror-5.51.0/lib/codemirror.css">
+	<link rel="stylesheet" href="./lib/codemirror-5.51.0/theme/ayu-mirage.css">
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"
+		integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+	<script src="./lib/codemirror-5.51.0/lib/codemirror.js"></script>
+	<script src="./lib/codemirror-5.51.0/mode/shex/shex.js"></script>
+</head>
+
+<body>
+	<section id="editorcontainer">
+		<div class="centerdiv">
+			<button id="shextograph" class="btn1">Create 3D Graph from RDF</button><button id="loadex" class="btn1">Load
+				RDF data example</button>
+		</div>
+		<div class="centerdiv">
+			<label for="shextext"></label>
+			<textarea id="shextext"></textarea>
+		</div>
+
+	</section>
+
+	<div id="graphcontainer">
+		<div id="tooltip"></div>
+		<div id="autocompletecontainer" class="autocomplete hidden" style="width:300px;">
+			<input id="nodeInput" type="text" name="node" placeholder="Search...">
+		</div>
+		<button id="open-modal" type="button" class="open-modal hidden" data-open="modal1"><img
+				src="static/settings.png" /></button>
+
+		<div class="modal" id="modal1">
+			<div class="modal-dialog">
+				<header class="modal-header">
+					<h3>Settings</h3>
+					<button class="close-modal" aria-label="close modal" data-close>✕</button>
+				</header>
+				<section class="modal-content">
+					<input type="checkbox" id="chWikidata" name="chWikidata" value="wikidata" checked>
+					<label for="chWikidata">Wikidata tooltips</label><br>
+					<input type="checkbox" id="chStNode" name="chStNode" value="stnode" checked>
+					<label for="chStNode">Node labels</label><br>
+					<input type="checkbox" id="chStEdge" name="chStEdge" value="stedge" checked>
+					<label for="chStEdge">Static edge labels</label><br>
+					<input type="checkbox" id="chCardEdge" name="chCardEdge" value="cardedge" checked>
+					<label for="chCardEdge">Show edge cardinalities</label><br>
+				</section>
+			</div>
+		</div>
+		<div id="3d-graph"></div>
+	</div>
+
+	<script src="index.js"></script>
+
+
+</body>

@@ -1,128 +1,115 @@
-const shexParser = require("./src/ShExParser.js");
-import TresDGen from './src/TresDGen.js';
-import autocomplete from './src/search/Search.js';
-import $ from "jquery";
-import SpriteText from 'three-spritetext';
+import sh3 from "../main.js";
 
-class ShExTo3D {
-	
-	constructor () {
-		this.graph = null;
-		this.gData = null;
-		this.highlightLinks = null;
-    }
-
-	shExTo3D(text, id) {
-		let nodeList = [];
-		try {
-			this.gData = shexParser.parseShExToGraph(text);
-			this.gData.nodes.forEach(node => {
-				nodeList.push(node.id);
-			});
-		} catch(ex) {
-			alert("An error has occurred when generating the graph data: \n" + ex);
-		}
-		
-		if(this.gData.nodes.length > 69) {
-			$('#chStNode').prop('checked', false);
-			TresDGen.hiddenNodes = true;
-
-		}
-		if(this.gData.links.length > 288) {
-			$('#chStEdge').prop('checked', false);
-			TresDGen.hiddenEdges = true;
-		}
-		
-		try {
-			this.graph = TresDGen.run(this.gData, id);
-			this.highlightLinks = TresDGen.getHighlightLinks();
-			autocomplete(document.getElementById("nodeInput"), nodeList, this);
-		} catch(ex) {
-			alert("An error has occurred when generating the visualization: \n" + ex);
-		}
-		return this.graph;
-	}
-	
-	nodeCloseup(id) {
-		const node = this.gData.nodes.find(obj => {
-                return obj.id === id
-            });
-		const distance = 60;
-        const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
-
-		this.graph.cameraPosition(
-		{ x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
-		node,
-		2000 
-		);
-	}
-	
-	setWikidataTooltips(val) {
-		TresDGen.wikidataTooltips = val;
-	}
-	
-	setNodeLabels(val) {
-		if(val) { //Ponerlos
-			$( ".node-label" ).each(function() {
-			  $(this).removeClass('hidden');
-			});
-			TresDGen.hiddenNodes = !val;
-			this.graph.nodeLabel(node => "");
-		} 
-		else { //Quitarlos
-			$( ".node-label" ).each(function() {
-			  $(this).addClass('hidden');
-			});
-			TresDGen.hiddenNodes = !val;
-			this.graph.nodeLabel(node => node.id);
-		}
-	}
-	
-	setStaticEdges(val) {
-		TresDGen.hiddenEdges = !val;
-		if(val) { 
-			this.graph.linkThreeObject(link => {
-				let cardinality = TresDGen.edgeCardinality ? link.cardinality : "";
-				return this.createSprite(link.nname + cardinality, link);
-            })
-			this.gData.links.forEach(link => {
-				link.name = undefined;
-			});
-		} 
-		else { 
-			this.graph.linkThreeObject(link => {
-				return this.createSprite("", link);
-            })
-			this.gData.links.forEach(link => {
-				link.name = link.nname;
-			});
-		}
-	}
-	
-	setEdgeCardinality(val) {
-		TresDGen.edgeCardinality = val;
-		if(!TresDGen.hiddenEdges) {
-			if(val) { 
-				this.graph.linkThreeObject(link => {
-					return this.createSprite(`${link.nname}` + `${link.cardinality}`, link);
-				})
-			} 
-			else { 
-				this.graph.linkThreeObject(link => {
-					return this.createSprite(`${link.nname}`, link);
-				})
-			}
-		}
-		
-	}
-	
-	createSprite(text, link) {
-		const sprite = new SpriteText(text);
-		sprite.color = 'lightgrey';
-		sprite.textHeight = 2;
-		sprite.link = link;
-		link.sprite = sprite;
-		return sprite;
-	}
+if(document.getElementById("shextext") !== null) {
+    var shExEditor = CodeMirror.fromTextArea(document.getElementById("shextext"), {
+        mode: "shex",
+        lineNumbers: true
+    });
+    let theme = sessionStorage.getItem("theme");
+    shExEditor.setOption("theme", "ayu-mirage");
 }
-export default new ShExTo3D();
+
+let shxtx = $('#shextograph');
+shxtx.click(sshExTo3D);
+
+function sshExTo3D() {
+	let text = shExEditor.getValue();
+	sh3.shExTo3D(text, "3d-graph");
+
+	$("#editorcontainer").css("display", "none");
+	$("#graphcontainer").css("display", "inherit");
+	$("#autocompletecontainer").removeClass("hidden");
+	$("#open-modal").removeClass("hidden");
+}
+
+let load = $('#loadex');
+
+load.click(loadExample);
+
+function loadExample() {
+	$.get('./static/genewiki.shex.txt', function(data) {
+		shExEditor.setValue(data);
+	});
+}
+
+$( "#nodeInput" ).keydown(function(event) {
+	let term = $( "#nodeInput" ).val();
+	search(event, term);
+});
+
+function search(event, id) {
+	if(event.key === 'Enter') {
+		sh3.nodeCloseup(id);
+	}
+	
+}
+
+//Gestión de modales
+const openEls = document.querySelectorAll("[data-open]");
+const closeEls = document.querySelectorAll("[data-close]");
+const isVisible = "is-visible";
+ 
+for(const el of openEls) {
+  el.addEventListener("click", function() {
+    const modalId = this.dataset.open;
+    document.getElementById(modalId).classList.add(isVisible);
+  });
+}
+ 
+for (const el of closeEls) {
+  el.addEventListener("click", function() {
+    this.parentElement.parentElement.parentElement.classList.remove(isVisible);
+  });
+}
+ 
+document.addEventListener("click", e => {
+  if (e.target == document.querySelector(".modal.is-visible")) {
+    document.querySelector(".modal.is-visible").classList.remove(isVisible);
+  }
+});
+
+document.addEventListener("keyup", e => {
+  if (e.key == "Escape" && document.querySelector(".modal.is-visible")) {
+    document.querySelector(".modal.is-visible").classList.remove(isVisible);
+  }
+});
+
+const chWikidata = document.getElementById('chWikidata')
+const chStNode = document.getElementById('chStNode')
+const chStEdge = document.getElementById('chStEdge')
+const chCardEdge = document.getElementById('chCardEdge')
+
+chWikidata.addEventListener('change', (event) => {
+  if (event.currentTarget.checked) {
+		$("#tooltip").removeClass('hidden');
+		sh3.setWikidataTooltips(true);
+  } else {
+	  $("#tooltip").addClass('hidden');
+	  sh3.setWikidataTooltips(false);
+    
+  }
+})
+
+chStNode.addEventListener('change', (event) => {
+  if (event.currentTarget.checked) {
+    sh3.setNodeLabels(true);
+  } else {
+     sh3.setNodeLabels(false);
+  }
+})
+
+chStEdge.addEventListener('change', (event) => {
+  if (event.currentTarget.checked) {
+    sh3.setStaticEdges(true);
+  } else {
+     sh3.setStaticEdges(false);
+  }
+})
+
+chCardEdge.addEventListener('change', (event) => {
+  if (event.currentTarget.checked) {
+    sh3.setEdgeCardinality(true);
+  } else {
+     sh3.setEdgeCardinality(false);
+  }
+})
