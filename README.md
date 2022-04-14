@@ -2,6 +2,10 @@
 
 Visualizations of RDF graphs in 3-D
 
+## NOTE
+
+This is a preliminary repo. The code has been copied from [3dShEx](https://github.com/weso/3dshex). The aim is to create something similar for RDF graphs.
+
 ## How to use
 
 Install with the following command:
